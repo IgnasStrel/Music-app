@@ -3,61 +3,56 @@ import { Renderer, Stave, StaveNote, TickContext } from 'vexflow';
 
 const MakeASong = () => {
   const canvasRef = useRef(null);
-  const [notePosition, setNotePosition] = useState({ x: 300, y: 100 }); // Natos pradinė padėtis
+  const [notePosition, setNotePosition] = useState({ x: 300, y: 100 }); // Initial note position
   const [isDragging, setIsDragging] = useState(false);
+  const note = useRef(null); // Using ref to store the note object
 
   useEffect(() => {
-    drawStaff();
-  }, []);
-
-  const drawStaff = () => {
     const canvas = canvasRef.current;
     const renderer = new Renderer(canvas, Renderer.Backends.CANVAS);
     renderer.resize(700, 200);
     const context = renderer.getContext();
 
-    // Nupiešti penklines
+    // Draw the staff
     const stave = new Stave(50, 50, 600);
     stave.addClef('treble').addTimeSignature('4/4');
     stave.setContext(context).draw();
 
-    // Nupiešti natą
-    drawNote(context, stave);
-  };
+    // Create and draw the note if it doesn't exist
+    if (!note.current) {
+      note.current = new StaveNote({
+        keys: ['c/4'], // Note key
+        duration: 'q', // Note duration
+      });
+    }
 
-  const drawNote = (context, stave) => {
-    // Sukurti natą
-    const note = new StaveNote({
-      keys: ['c/4'],
-      duration: 'q',
-    });
+    // Set the note's position
+    note.current.setStave(stave);
+    note.current.setContext(context);
 
-    // Pridėti natos TickContext
+    // Create a TickContext for the note
     const tickContext = new TickContext();
-    tickContext.addTickable(note);
+    tickContext.addTickable(note.current);
     tickContext.preFormat();
-    
-    // Nustatyti natų poziciją
-    note.setStave(stave);
-    note.setContext(context);
-    note.draw();
 
-    // Pridėti natą prie pozicijos
-    context.fillStyle = 'black'; // Natos spalva
-    context.font = '48px Arial'; // Nustatyti didesnį šrifto dydį
-    context.fillText('♩', notePosition.x, notePosition.y); // Natos simbolis
-  };
+    // Draw the note
+    note.current.draw();
+
+    // Draw the note symbol at the updated position
+    context.fillStyle = 'black'; // Note color
+    context.font = '48px Arial'; // Set a larger font size
+    context.fillText('♩', notePosition.x, notePosition.y); // Note symbol
+
+  }, [notePosition]); // Dependency on notePosition
 
   const handleMouseDown = (e) => {
     const canvas = canvasRef.current;
     const { offsetX, offsetY } = e.nativeEvent;
 
-    // Patikrinkite, ar paspaudėte ant natos
+    // Check if the click is on the note
     if (
-      offsetX >= notePosition.x &&
-      offsetX <= notePosition.x + 40 && // Pakeistas plotis, kad atitiktų didesnį simbolį
-      offsetY >= notePosition.y - 40 && // Pakeistas aukštis, kad atitiktų didesnį simbolį
-      offsetY <= notePosition.y
+      offsetX >= notePosition.x - 20 && offsetX <= notePosition.x + 20 &&
+      offsetY >= notePosition.y - 40 && offsetY <= notePosition.y
     ) {
       setIsDragging(true);
     }
@@ -68,9 +63,8 @@ const MakeASong = () => {
       const canvas = canvasRef.current;
       const { offsetX, offsetY } = e.nativeEvent;
 
-      // Atnaujinkite natos padėtį
+      // Update the note's position
       setNotePosition({ x: offsetX, y: offsetY });
-      drawStaff(); // Pakartotinai nupiešti, kad atnaujintumėte natos padėtį
     }
   };
 
@@ -80,7 +74,7 @@ const MakeASong = () => {
 
   return (
     <div>
-      <h1>Vilkimų Natos</h1>
+      <h1>Draggable Note</h1>
       <canvas
         ref={canvasRef}
         width={700}
