@@ -1,0 +1,36 @@
+/* src/components/LandingPage.css */
+.landing-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh; /* Full viewport height */
+    background-color: #f4f4f4; /* Background color */
+}
+
+.app-name {
+    font-size: 4rem; /* App name size */
+    color: #333; /* Text color */
+    margin-bottom: 40px; /* Spacing below the title */
+}
+
+.options {
+    display: flex;
+    flex-direction: column; /* Align buttons vertically */
+}
+
+.option-button {
+    background-color: #007bff; /* Button background color */
+    color: white; /* Button text color */
+    padding: 15px 30px; /* Button padding */
+    margin: 10px 0; /* Spacing between buttons */
+    border: none; /* No border */
+    border-radius: 5px; /* Rounded corners */
+    font-size: 1.5rem; /* Button text size */
+    cursor: pointer; /* Pointer cursor on hover */
+    transition: background-color 0.3s; /* Smooth background change */
+}
+
+.option-button:hover {
+    background-color: #0056b3; /* Darker color on hover */
+}
