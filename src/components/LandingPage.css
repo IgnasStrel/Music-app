@@ -1,36 +1,53 @@
 /* src/components/LandingPage.css */
 .landing-page {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100vh; /* Full viewport height */
-    background-color: #f4f4f4; /* Background color */
+    height: 100vh; /* Full height */
+    background-image: url('../photos/bg.jpg'); /* Set the background image */
+    background-size: cover; /* Cover the entire background */
+    background-position: center; /* Center the background image */
+    display: flex; /* Flexbox for layout */
+    justify-content: center; /* Center app name */
+    align-items: center; /* Center vertically for app name */
+    position: relative; /* Relative positioning for pseudo-elements */
 }
 
 .app-name {
-    font-size: 4rem; /* App name size */
-    color: #333; /* Text color */
-    margin-bottom: 40px; /* Spacing below the title */
+    font-size: 5em; /* Larger font size for the name */
+    position: absolute; /* Position the app name absolutely */
+    top: 20%; /* Adjust position vertically */
+    text-align: center; /* Center the text */
+    color: lightblue; /* Set text color to light blue */
 }
 
 .options {
-    display: flex;
-    flex-direction: column; /* Align buttons vertically */
+    display: flex; /* Flexbox for options layout */
+    flex-direction: column; /* Stack buttons vertically */
+    align-items: flex-start; /* Align options to the start (left) */
+    position: absolute; /* Position absolutely to place correctly */
+    left: 50px; /* Add left margin */
+    top: 50%; /* Center vertically in the middle */
+    transform: translateY(-50%); /* Adjust for centering */
+    z-index: 1; /* Place options above background */
 }
 
 .option-button {
-    background-color: #007bff; /* Button background color */
-    color: white; /* Button text color */
-    padding: 15px 30px; /* Button padding */
-    margin: 10px 0; /* Spacing between buttons */
+    background: white; /* Background color for buttons */
     border: none; /* No border */
-    border-radius: 5px; /* Rounded corners */
-    font-size: 1.5rem; /* Button text size */
+    color: lightblue; /* Set text color to light blue */
+    font-size: 1.5em; /* Font size for buttons */
+    padding: 15px 30px; /* Padding for buttons */
+    margin: 10px 0; /* Spacing between buttons */
     cursor: pointer; /* Pointer cursor on hover */
-    transition: background-color 0.3s; /* Smooth background change */
+    border-radius: 20px; /* Rounded corners */
+    transition: background 0.3s; /* Smooth transition for background */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Add a subtle shadow */
 }
 
 .option-button:hover {
-    background-color: #0056b3; /* Darker color on hover */
+    background: rgba(255, 255, 255, 0.8); /* Light background on hover */
+    color: lightblue; /* Change text color on hover */
+}
+
+/* Remove the sword-like effect */
+.option-button::after {
+    content: ''; /* Remove the triangle */
 }
