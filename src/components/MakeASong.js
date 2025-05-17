@@ -1,89 +1,132 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Renderer, Stave, StaveNote, TickContext } from 'vexflow';
+import { Renderer, Stave, StaveNote, Voice, Formatter } from 'vexflow';
 
 const MakeASong = () => {
-  const canvasRef = useRef(null);
-  const [notePosition, setNotePosition] = useState({ x: 300, y: 100 }); // Initial note position
+  const containerRef = useRef(null);
+  const [notePositions, setNotePositions] = useState([
+    { x: 50, y: 50 },
+    { x: 150, y: 50 },
+    { x: 250, y: 50 },
+    { x: 350, y: 50 },
+  ]);
   const [isDragging, setIsDragging] = useState(false);
-  const note = useRef(null); // Using ref to store the note object
+  const [draggingNoteIndex, setDraggingNoteIndex] = useState(null);
+  const noteRefs = useRef([]);
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const renderer = new Renderer(canvas, Renderer.Backends.CANVAS);
+  // Render notation
+  const renderNotation = () => {
+    if (!containerRef.current) return;
+
+    containerRef.current.innerHTML = ''; // Clear previous rendering
+
+    // Create VexFlow renderer
+    const renderer = new Renderer(containerRef.current, Renderer.Backends.SVG);
     renderer.resize(700, 200);
     const context = renderer.getContext();
 
-    // Draw the staff
+    // Draw staff (clef and time signature)
     const stave = new Stave(50, 50, 600);
     stave.addClef('treble').addTimeSignature('4/4');
     stave.setContext(context).draw();
 
-    // Create and draw the note if it doesn't exist
-    if (!note.current) {
-      note.current = new StaveNote({
-        keys: ['c/4'], // Note key
-        duration: 'q', // Note duration
+    // Create notes
+    const notes = [
+      new StaveNote({ keys: ['c/4'], duration: 'q' }),
+      new StaveNote({ keys: ['d/4'], duration: 'q' }),
+      new StaveNote({ keys: ['e/4'], duration: 'q' }),
+      new StaveNote({ keys: ['f/4'], duration: 'q' }),
+    ];
+
+    // Create a voice and add notes
+    const voice = new Voice({ num_beats: 4, beat_value: 4 });
+    voice.setStrict(false);
+    voice.addTickable(notes[0]);
+    voice.addTickable(notes[1]);
+    voice.addTickable(notes[2]);
+    voice.addTickable(notes[3]);
+
+    // Create formatter to format the notes
+    new Formatter().joinVoices([voice]).format([voice], 400);
+    voice.draw(context, stave);
+
+    // Select all note elements
+    const svg = containerRef.current.querySelector('svg');
+    const noteElements = svg.querySelectorAll('.vf-stavenote');
+
+    // For each note element, set initial position and handle dragging
+    noteElements.forEach((noteElement, index) => {
+      const { x, y } = notePositions[index];
+
+      // Apply translation (move note to the correct position)
+      noteElement.setAttribute('transform', `translate(${x}, ${y})`);
+
+      // Add mouse down event for dragging
+      noteElement.style.cursor = 'grab';
+      noteElement.addEventListener('mousedown', (e) => {
+        e.preventDefault(); // Stop other events
+        setIsDragging(true);
+        setDraggingNoteIndex(index); // Track which note is being dragged
       });
-    }
 
-    // Set the note's position
-    note.current.setStave(stave);
-    note.current.setContext(context);
-
-    // Create a TickContext for the note
-    const tickContext = new TickContext();
-    tickContext.addTickable(note.current);
-    tickContext.preFormat();
-
-    // Draw the note
-    note.current.draw();
-
-    // Draw the note symbol at the updated position
-    context.fillStyle = 'black'; // Note color
-    context.font = '48px Arial'; // Set a larger font size
-    context.fillText('♩', notePosition.x, notePosition.y); // Note symbol
-
-  }, [notePosition]); // Dependency on notePosition
-
-  const handleMouseDown = (e) => {
-    const canvas = canvasRef.current;
-    const { offsetX, offsetY } = e.nativeEvent;
-
-    // Check if the click is on the note
-    if (
-      offsetX >= notePosition.x - 20 && offsetX <= notePosition.x + 20 &&
-      offsetY >= notePosition.y - 40 && offsetY <= notePosition.y
-    ) {
-      setIsDragging(true);
-    }
+      // Save note ref for later use
+      noteRefs.current[index] = noteElement;
+    });
   };
 
-  const handleMouseMove = (e) => {
-    if (isDragging) {
-      const canvas = canvasRef.current;
-      const { offsetX, offsetY } = e.nativeEvent;
+  // Handle mouse move for dragging
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!isDragging || draggingNoteIndex === null) return;
 
-      // Update the note's position
-      setNotePosition({ x: offsetX, y: offsetY });
-    }
-  };
+      const containerRect = containerRef.current.getBoundingClientRect();
 
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
+      // Calculate the new mouse position inside the container
+      let x = e.clientX - containerRect.left;
+      let y = e.clientY - containerRect.top;
+
+      // Ensure that the note's Y position doesn't drop below the initial position
+      // We keep the Y position fixed at minimum as the start position, only allow movement along X
+      const updatedY = 50; // Fixed Y position so note doesn't fall down
+
+      // Update the position of the dragged note
+      const updatedPositions = [...notePositions];
+      updatedPositions[draggingNoteIndex] = { x, y: updatedY };
+
+      setNotePositions(updatedPositions); // Update state with new positions
+    };
+
+    const handleMouseUp = () => {
+      if (isDragging) setIsDragging(false); // Stop dragging
+    };
+
+    // Attach the mousemove and mouseup event listeners
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      // Clean up event listeners when the component is unmounted
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, draggingNoteIndex, notePositions]); // Re-run when position changes
+
+  // Render the musical notation and handle dragging
+  useEffect(() => {
+    renderNotation(); // Re-render notation each time note positions change
+  }, [notePositions]); // Run when notePositions are updated
 
   return (
-    <div>
-      <h1>Draggable Note</h1>
-      <canvas
-        ref={canvasRef}
-        width={700}
-        height={200}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        style={{ border: '1px solid black' }}
-      ></canvas>
+    <div style={{ justifyItems: 'center', alignItems: 'center', height: '100vh' }}>
+      <h1>Drag the note 🎵</h1>
+      <div
+        ref={containerRef}
+        style={{
+          width: '700px',
+          height: '500px',
+          border: '1px solid black',
+          userSelect: 'none',
+        }}
+      ></div>
     </div>
   );
 };
